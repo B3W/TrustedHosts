@@ -1,4 +1,4 @@
-﻿#####
+#####
 ### CMDLET for retrieving the trusted hosts from a machine.
 ### If the '$Remote' switch is not set then only the trusted
 ### hosts from the local machine will be retrieved.
@@ -45,102 +45,108 @@ Function Get-TrustedHosts {
 
         } else {
             
-            # Retrieve Trusted host from specified computer(s) using provided credentials
-            Write-Verbose "Retrieving Trusted Hosts from remote machine(s)"
+            # Piping through ForEach loop allows for computers to be passed in via pipline or parameter
+            $ComputerName | ForEach-Object {
 
-            # Test network connection to the computer 
-            Write-Verbose "Checking connection to $ComputerName..."
+                # Retrieve Trusted host from specified computer(s) using provided credentials
+                Write-Verbose "Retrieving Trusted Hosts from remote machine"
 
-            if(Test-Connection -ComputerName $ComputerName -Count 1 -Quiet) {
+                # Test network connection to the computer 
+                Write-Verbose "Checking connection to $_..."
 
-                 Write-Verbose "Connection to $ComputerName verified`n"
+                if(Test-Connection -ComputerName $_ -Count 1 -Quiet) {
 
-                try {
- 
-                    # Open PowerShell Session
-                    Write-Verbose "Creating PowerShell session..."
+                     Write-Verbose "Connection to $_ verified`n"
 
                     try {
+ 
+                        # Open PowerShell Session
+                        Write-Verbose "Creating PowerShell session..."
 
-                        $PsSession = New-PSSession -ComputerName $ComputerName -Credential $Credential -ErrorAction Stop 
+                        try {
 
-                    } catch {
+                            $PsSession = New-PSSession -ComputerName $_ -Credential $Credential -ErrorAction Stop 
 
-                        Write-Host "Error occurred during creation of PowerShell session" -ForegroundColor Red
+                        } catch {
 
-                        # Throw error to outer catch
-                        throw
+                            Write-Host "Error occurred during creation of PowerShell session" -ForegroundColor Red
 
-                    }
+                            # Throw error to outer catch
+                            throw
 
-                    Write-Verbose "PowerShell session created successfully!`n"
+                        }
+
+                        Write-Verbose "PowerShell session created successfully!`n"
 
  
-                    # Retrieve Trusted Hosts
-                    Write-Verbose "Retrieving Trusted Hosts from $ComputerName..."
+                        # Retrieve Trusted Hosts
+                        Write-Verbose "Retrieving Trusted Hosts from $_..."
 
-                    try {
+                        try {
 
-                        $RemoteHosts = Invoke-Command -Session $PsSession -ErrorAction Stop -ScriptBlock 
-                            { 
-                                # Get the Trusted Hosts list from WSMan
-                                $TrustedHosts = Get-Item WSMan:\localhost\Client\TrustedHosts | Select -ExpandProperty Value
+                            $RemoteHosts = Invoke-Command -Session $PsSession -ErrorAction Stop -ScriptBlock {
+                         
+                                    # Get the Trusted Hosts list from WSMan
+                                    $TrustedHosts = Get-Item WSMan:\localhost\Client\TrustedHosts | Select -ExpandProperty Value
     
-                                # Format the output
-                                $Output = "$ComputerName : $TrustedHosts"
+                                    # Format the output
+                                    $Output = "$args : $TrustedHosts"
 
-                                $Output 
-                            }
+                                    $Output 
 
-                        $RemoteHosts
+                                } -ArgumentList $_
 
-                    } catch { 
+                            $RemoteHosts
 
-                        Write-Host "Error while retrieving Trusted Hosts from $ComputerName" -ForegroundColor Red
+                        } catch { 
 
-                        # Remove PowerShell session before exiting
-                        Remove-PSSession $PsSession
+                            Write-Host "Error while retrieving Trusted Hosts from $_" -ForegroundColor Red
 
-                        # Throw error to outer catch
-                        throw
+                            # Remove PowerShell session before exiting
+                            Remove-PSSession $PsSession
 
-                    }
+                            # Throw error to outer catch
+                            throw
 
-                    Write-Verbose "Trusted Hosts retrieved successfully`n"
+                        }
+
+                        Write-Verbose "Trusted Hosts retrieved successfully`n"
 
 
-                    # Remove the PowerShell session
-                    Write-Verbose "Removing PowerShell session...`n" 
+                        # Remove the PowerShell session
+                        Write-Verbose "Removing PowerShell session..." 
 
-                    try {
+                        try {
 
-                        Remove-PSSession $PsSession -ErrorAction Stop
+                            Remove-PSSession $PsSession -ErrorAction Stop
+
+                        } catch {
+
+                            Write-Host "Error while removing PowerShell session" -ForegroundColor Red
+
+                            # Throw error to outer catch
+                            throw
+
+                        }
+
+                        Write-Verbose "PowerShell session removed`n" 
 
                     } catch {
 
-                        Write-Host "Error while removing PowerShell session" -ForegroundColor Red
-
-                        # Throw error to outer catch
-                        throw
+                        # Display error
+                        Write-Host $Error[0] -ForegroundColor Red
 
                     }
+ 
 
-                    Write-Verbose "PowerShell session removed`n" 
+                } else {
 
-                } catch {
+                    Write-Verbose "Unable to connect to machine $_"
 
-                    # Display error
-                    Write-Host $Error[0] -ForegroundColor Red
+                    "$_ : Unable To Connect"
 
                 }
- 
-
-            } else {
-
-                Write-Verbose "Unable to connect to machine $ComputerName"
-
-                "$ComputerName : Unable To Connect"
-
+            
             }
 
         }
@@ -158,8 +164,8 @@ Function Get-TrustedHosts {
 # Testing
 #Get-TrustedHosts -Verbose
 
-#"localhost" | Get-TrustedHosts -Credential (Get-Credential)
+#"localhost", "RemoteMachine" | Get-TrustedHosts -Credential (Get-Credential) -Verbose
 
 #Get-TrustedHosts -Local -Verbose
 
-#Get-TrustedHosts -Remote -ComputerName "localhost" -Credential (Get-Credential) -Verbose
+#Get-TrustedHosts -Remote -ComputerName ("localhost","RemoteMachine") -Credential (Get-Credential) -Verbose
