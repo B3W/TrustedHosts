@@ -111,7 +111,7 @@ Function Add-TrustedHosts {
             # I found a reason. This is why you see '$TrustedHosts.PSObject.BaseObject' instead of just '$TrustedHosts'. If Set-Item works
             # for you without using the PSObject feel free to modify this. I am running PowerShell V5.1 so not sure why this is affecting
             # me, but the fix worked so I'm keeping it for now.
-            Set-Item "WSMan:\localhost\Client\TrustedHosts" -Value $TrustedHosts.PSObject.BaseObject -ErrorAction Stop #-Credential $Credential
+            Set-Item "WSMan:\localhost\Client\TrustedHosts" -Value $TrustedHosts.PSObject.BaseObject -ErrorAction Stop -Credential $Credential
         
         } else {
 
