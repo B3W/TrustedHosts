@@ -1,4 +1,13 @@
 ﻿#####
+### Copyright (c) 2019 Weston Berg
+### THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+### IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+### FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+### AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+### LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+### OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+### SOFTWARE.
+###
 ### CMDLET for removing trusted hosts from a machine.
 ### If the '$Remote' switch is not set then only the trusted
 ### hosts from the local machine will be removed if necessary.
@@ -31,7 +40,7 @@ Function Remove-TrustedHosts {
 
 
     # Main processing block.
-    # Add Trusted Host(s) via Set-Item and WSMan. Appends new hosts to the end of the Trusted Hosts string.
+    # Determine the new set of Trusted Hosts after removal.
     Process{
     
         # Split list for checking supplied hosts against
